@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import board.BoardXCoordinates
 import org.jetbrains.compose.resources.painterResource
+import pieces.Pawn
 import pieces.Piece
 import ui.ActiveColor
 import ui.DarkColor
@@ -105,6 +106,7 @@ fun BoardCell(
         }
 
         if (isAvailableMove)
+
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)

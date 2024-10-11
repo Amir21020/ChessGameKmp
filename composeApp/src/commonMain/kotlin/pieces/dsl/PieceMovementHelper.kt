@@ -3,7 +3,6 @@ package pieces.dsl
 import androidx.compose.ui.unit.IntOffset
 import board.BoardXCoordinates
 import board.BoardYCoordinates
-import board.isTheKingInThreat
 import pieces.Piece
 
 fun Piece.getMoves(
