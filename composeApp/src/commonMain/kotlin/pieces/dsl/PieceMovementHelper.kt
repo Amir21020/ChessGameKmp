@@ -22,8 +22,12 @@ fun Piece.getMoves(
 
         val targetPiece = pieces.find { it.position == targetPosition }
 
+        val kingPosition = pieces.find { it.type == 'K' && it.color != this.color}?.position
+
+
+
         if (targetPiece != null) {
-            if (targetPiece.color != this.color && canCapture)
+            if (targetPiece.color != this.color && canCapture && kingPosition != targetPosition)
                 moves.add(targetPosition)
 
             break
@@ -59,9 +63,13 @@ fun Piece.getLMoves(
         if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
             continue
 
+        val kingPosition = pieces.find { it.type == 'K' && it.color != this.color}?.position
+
         val targetPiece = pieces.find { it.position == targetPosition }
-        if (targetPiece == null || targetPiece.color != this.color)
+
+        if (kingPosition != targetPosition && (targetPiece == null || targetPiece.color != this.color )) {
             moves.add(targetPosition)
+        }
     }
 
     return moves
