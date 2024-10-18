@@ -9,7 +9,7 @@ import pieces.dsl.getPieceMoves
 
 class Queen(
     override val color: Piece.Color,
-    override var position: IntOffset,
+    override var position: IntOffset, override var moveCount: Int,
 ): Piece {
 
     override val type: Char = Type

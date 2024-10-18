@@ -68,28 +68,31 @@ class PieceMovementBuilder(
         }
     }
 
-//    fun castlingMoves(
-//    ) {
-//        CastlingMovement.entries.forEach { movement ->
-//            castlingMoves(
-//                movement = movement,
-//            )
-//        }
-//
-//    }
-//
-//    fun castlingMoves(
-//        movement: CastlingMovement,
-//    ){
-//        val lenghtCastlingMovement =  if(movement == CastlingMovement.Left) 2 else 3
-//        moves.addAll(
-//            piece.getCastlingMoves(
-//                pieces = pieces,
-//                movement = movement,
-//                maxMovements = lenghtCastlingMovement
-//            )
-//        )
-//    }
+    fun castlingMoves(
+    ) {
+        CastlingMovement.entries.forEach { movement ->
+            castlingMoves(
+                movement = movement,
+            )
+        }
+
+    }
+
+    fun castlingMoves(
+        movement: CastlingMovement,
+    ){
+        val maxMovements = when (movement) {
+            CastlingMovement.Left -> 3
+            CastlingMovement.Right -> 2
+        }
+        moves.addAll(
+            piece.getCastlingMoves(
+                pieces = pieces,
+                movement = movement,
+                maxMovements = maxMovements
+            )
+        )
+    }
 
     fun diagonalMoves(
         movement: DiagonalMovement,

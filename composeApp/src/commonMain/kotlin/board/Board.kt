@@ -79,6 +79,9 @@ class Board(
             switchPlayerTurn()
 
             moveIncrement++
+
+            piece.moveCount++
+
         }
     }
 

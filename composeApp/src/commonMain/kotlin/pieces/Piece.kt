@@ -22,7 +22,7 @@ interface Piece {
 
     val type: Char
 
-//    var moveCount : Int
+    var moveCount : Int
 
     val drawable: DrawableResource
 
@@ -57,26 +57,26 @@ interface Piece {
                     y = y.digitToInt() + BoardYCoordinates.min()
                 )
 
-//            val moveCount = 0
+            val moveCount = 0
 
             return when (type) {
                 Pawn.Type ->
-                    Pawn(pieceColor, position)
+                    Pawn(pieceColor, position,moveCount)
                 King.Type ->
-                    King(pieceColor, position  )
+                    King(pieceColor, position, moveCount  )
 
 
                 Queen.Type ->
-                    Queen(pieceColor, position)
+                    Queen(pieceColor, position, moveCount)
 
                 Knight.Type ->
-                    Knight(pieceColor, position)
+                    Knight(pieceColor, position, moveCount)
 
                 Rook.Type ->
-                    Rook(pieceColor, position)
+                    Rook(pieceColor, position, moveCount)
 
                 Bishop.Type ->
-                    Bishop(pieceColor, position)
+                    Bishop(pieceColor, position, moveCount)
 
                 else ->
                     throw IllegalArgumentException("Invalid piece type!")
