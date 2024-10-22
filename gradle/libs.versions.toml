@@ -13,7 +13,7 @@ annotationJvm = "1.8.2"
 roomCompiler = "2.6.1"
 roomCommon = "2.6.1"
 roomCommonJvm = "2.7.0-alpha09"
-room = "2.7.0-alpha09"
+room = "2.7.0-alpha10"
 ksp = "2.0.20-1.0.24"
 sqlite = "2.5.0-SNAPSHOT"
 
@@ -37,6 +37,7 @@ sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sql
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
+
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

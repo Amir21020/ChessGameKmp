@@ -3,6 +3,7 @@ package pieces.dsl
 import androidx.compose.ui.unit.IntOffset
 import board.BoardXCoordinates
 import board.BoardYCoordinates
+import board.isCheckmate
 import board.isTheKingInThreat
 import pieces.Piece
 
@@ -15,11 +16,17 @@ fun Piece.getMoves(
 ): Set<IntOffset> {
     val moves = mutableSetOf<IntOffset>()
 
-    for (i in 1..maxMovements) {
+//    if(isCheckmate(pieces, this.color))
+//        return moves
+
+      for (i in 1..maxMovements) {
         val targetPosition = getPosition(i)
 
         if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
             break
+
+//          if(isTheKingInThreat(pieces,this,targetPosition.x, targetPosition.y))
+//            continue
 
         val targetPiece = pieces.find { it.position == targetPosition }
 
@@ -45,7 +52,11 @@ fun Piece.getMoves(
 fun Piece.getLMoves(
     pieces: List<Piece>,
 ): MutableSet<IntOffset> {
+
     val moves = mutableSetOf<IntOffset>()
+
+//    if(isCheckmate(pieces, this.color))
+//        return moves
 
     val offsets = listOf(
         IntOffset(-1, -2),
@@ -61,7 +72,8 @@ fun Piece.getLMoves(
     for (offset in offsets) {
         val targetPosition = position + offset
 
-        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
+        if (
+            targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
             continue
 
         val kingPosition = pieces.find { it.type == 'K' && it.color != this.color}?.position
@@ -81,40 +93,43 @@ fun Piece.getCMoves(
     getPosition: (Int) -> IntOffset,
     maxMovements: Int,
 ) : MutableSet<IntOffset> {
+
     val moves = mutableSetOf<IntOffset>()
 
+//    if(isCheckmate(pieces, this.color))
+//        return moves
+
     for (i in 1..maxMovements) {
-        var targetPosition = getPosition(i)
+            var targetPosition = getPosition(i)
 
-        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
-            break
+            if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
+                break
 
-        val targetPiece = pieces.find { it.position == targetPosition }
+            val targetPiece = pieces.find { it.position == targetPosition }
 
-        if (targetPiece != null)
-            break
+            if (targetPiece != null)
+                break
 
 
-        if (i == maxMovements) {
-            val rooks = pieces.filter { it.type == 'R' && it.color == this.color && it.moveCount == 0 }
+            if (i == maxMovements) {
+                val rooks = pieces.filter { it.type == 'R' && it.color == this.color && it.moveCount == 0 }
 
-            if(rooks.isEmpty() || this.moveCount != 0 || isTheKingInThreat(pieces, this, this.position.x, this.position.y))
-                break;
+                if(rooks.isEmpty() || this.moveCount != 0 || isTheKingInThreat(pieces, this, this.position.x, this.position.y))
+                    break;
 
-            if (maxMovements == 3){
-                targetPosition = getPosition(i - 1)
+                if (maxMovements == 3){
+                    targetPosition = getPosition(i - 1)
 
-                rooks.first().position = IntOffset(targetPosition.x + 1, targetPosition.y)
+                    rooks.first().position = IntOffset(targetPosition.x + 1, targetPosition.y)
+                }
+                else{
+                    rooks.last().position = IntOffset(targetPosition.x - 1, targetPosition.y)
+                }
+
+                moves.add(targetPosition)
+
             }
-            else{
-                rooks.last().position = IntOffset(targetPosition.x - 1, targetPosition.y)
-            }
-
-            moves.add(targetPosition)
 
         }
-
-        }
-
-        return moves
-    }
+    return moves
+}

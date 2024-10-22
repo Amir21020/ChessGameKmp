@@ -9,7 +9,9 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+//    alias(libs.plugins.sqldelight)
 }
+
 
 kotlin {
 
@@ -38,10 +40,14 @@ kotlin {
         val desktopMain by getting
         
         androidMain.dependencies {
+
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
+            implementation(libs.room.runtime)
             implementation(compose.runtime)
             implementation(compose.material)
             implementation(compose.foundation)
@@ -55,11 +61,6 @@ kotlin {
 
 
             implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.23")
-//            implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
-//            implementation("androidx.lifecycle:lifecycle-common-java8:2.8.6")
-//            implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
-            implementation(libs.room.runtime)
-            implementation(libs.sqlite.bundled)
             implementation(libs.voyager.navigator)
             implementation(libs.multiplatformSettings)
         }
@@ -73,6 +74,11 @@ kotlin {
         }
     }
 }
+
+//sqldelight{
+//    database("SavedChessGame"){
+//    }
+//}
 
 android {
     namespace = "com.mohamedrejeb.chess"

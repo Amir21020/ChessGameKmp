@@ -1,84 +1,83 @@
 package ui.load
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import board.Board.Companion.BoardKeyPrefix
+import board.deleteSavedGame
+import board.loadSavedGames
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.coroutines.launch
+import kotlinx.datetime.*
 import settings.boardSettings
 import ui.game.GameScreenNav
 
 @Composable
 fun LoadGameScreen() {
     val navigator = LocalNavigator.currentOrThrow
+    val coroutineScope = rememberCoroutineScope()
 
-    val savedGames = remember {
-        boardSettings
-            .keys
-            .filter {
-                it.startsWith(BoardKeyPrefix)
-            }
-            .mapNotNull { key ->
-                val encodedPieces = boardSettings.getStringOrNull(key)
-                    ?: return@mapNotNull null
+    var savedGames by remember { mutableStateOf(emptyList<Pair<LocalDateTime, String>>()) }
 
-                val millis = key
-                    .removePrefix(BoardKeyPrefix)
-                    .toLongOrNull()
-                    ?: return@mapNotNull null
-
-                val date = Instant
-                    .fromEpochMilliseconds(millis)
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-
-                date to encodedPieces
-            }
-            .sortedBy { (date, _) -> date }
+    LaunchedEffect(Unit) {
+        savedGames = loadSavedGames()
     }
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
+            modifier = Modifier.fillMaxSize().align(Alignment.Center)
         ) {
-            if (savedGames.isEmpty())
-                Text(
-                    text = "No saved games"
-                )
-            else
+            if (savedGames.isEmpty()) {
+                Text(text = "No saved games")
+            } else {
                 savedGames.forEach { (date, encodedPieces) ->
-                    Button(
-                        onClick = {
-                            navigator.push(GameScreenNav(encodedPieces))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth().padding(8.dp)
+                    ){
+                        Button(
+                            onClick = {
+                                navigator.push(GameScreenNav(encodedPieces))
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = "Game $date")
                         }
-                    ) {
-                        Text(
-                            text = "Game $date"
-                        )
+                        IconButton(
+                            onClick = {
+
+                                coroutineScope.launch {
+                                    deleteSavedGame(date)
+                                    savedGames = loadSavedGames() // Обновляем данные
+                                }
+                            },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Delete game"
+                            )
+                        }
                     }
                 }
+            }
         }
 
         IconButton(

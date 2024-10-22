@@ -8,10 +8,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntOffset
+import board.Board.Companion.BoardKeyPrefix
 import com.russhwolf.settings.set
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.*
+import kotlinx.datetime.*
 import pieces.Piece
 import settings.boardSettings
+
+@Composable
+fun Board.rememberPieceAt(x: Int, y: Int): Piece? =
+    remember(x, y, moveIncrement) {
+        getPiece(
+            x = x,
+            y = y,
+        )
+    }
 
 @Composable
 fun rememberBoard(
@@ -20,6 +31,33 @@ fun rememberBoard(
     remember {
         Board(encodedPieces = encodedPieces)
     }
+
+
+suspend fun loadSavedGames(): List<Pair<LocalDateTime, String>> {
+    return withContext(Dispatchers.IO) {
+        boardSettings
+            .keys
+            .filter { it.startsWith(BoardKeyPrefix) }
+            .mapNotNull { key ->
+                val encodedPieces = boardSettings.getStringOrNull(key) ?: return@mapNotNull null
+                val millis = key.removePrefix(BoardKeyPrefix).toLongOrNull() ?: return@mapNotNull null
+                val date = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.currentSystemDefault())
+                date to encodedPieces
+            }
+            .sortedBy { (date, _) -> date }
+    }
+}
+
+
+suspend fun deleteSavedGame(date: LocalDateTime) {
+    withContext(Dispatchers.IO) {
+        val instant = date.toInstant(TimeZone.currentSystemDefault())
+        val millis = instant.toEpochMilliseconds()
+        val keyToDelete = "$BoardKeyPrefix$millis"
+        boardSettings.remove(keyToDelete)
+    }
+}
+
 
 @Immutable
 class Board(
@@ -43,7 +81,11 @@ class Board(
     var moveIncrement by mutableIntStateOf(0)
         private set
 
-    var playerTurn by mutableStateOf(Piece.Color.White)
+    var playerTurn by mutableStateOf(
+        if(moveIncrement % 2 == 0)
+            Piece.Color.White
+        else
+            Piece.Color.Black)
 
     /**
      * User events
@@ -144,15 +186,6 @@ class Board(
         const val BoardKeyPrefix = "board_"
     }
 }
-
-@Composable
-fun Board.rememberPieceAt(x: Int, y: Int): Piece? =
-    remember(x, y, moveIncrement) {
-        getPiece(
-            x = x,
-            y = y,
-        )
-    }
 
 @Composable
 fun Board.rememberIsAvailableMove(x: Int, y: Int): Boolean =
