@@ -61,15 +61,11 @@ fun Piece.getMoves(
 
 
 
-
-fun Piece.getLMoves(
-    pieces: List<Piece>,
-): MutableSet<IntOffset> {
-
+fun Piece.getLMoves(pieces: List<Piece>): MutableSet<IntOffset> {
     val moves = mutableSetOf<IntOffset>()
 
-//    if(isCheckmate(pieces, this.color))
-//        return moves
+    // Получаем позицию короля противника
+    val king = pieces.find { it.type == 'K' && it.color != this.color }?.position
 
     val offsets = listOf(
         IntOffset(-1, -2),
@@ -85,64 +81,73 @@ fun Piece.getLMoves(
     for (offset in offsets) {
         val targetPosition = position + offset
 
-        if (
-            targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
-            continue
+        // Проверка выхода за пределы доски
+        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates) continue
 
-        val kingPosition = pieces.find { it.type == 'K' && it.color != this.color}?.position
-
+        // Поиск фигуры на целевой позиции
         val targetPiece = pieces.find { it.position == targetPosition }
 
-        if (kingPosition != targetPosition && (targetPiece == null || targetPiece.color != this.color )) {
+        // Проверяем, не находится ли король под угрозой при этом движении
+        val originalPosition = this.position
+        this.position = targetPosition // Временное перемещение фигуры
+
+        // Проверка угрозы для короля
+        if (king != targetPosition && (targetPiece == null || targetPiece.color != this.color) && !isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)) {
             moves.add(targetPosition)
         }
+
+        // Возврат фигуры в оригинальное состояние
+        this.position = originalPosition
     }
 
     return moves
 }
-
-fun Piece.getCMoves(
-    pieces : List<Piece>,
-    getPosition: (Int) -> IntOffset,
-    maxMovements: Int,
-) : MutableSet<IntOffset> {
-
+fun Piece.getCMoves(pieces: List<Piece>, getPosition: (Int) -> IntOffset, maxMovements: Int): MutableSet<IntOffset> {
     val moves = mutableSetOf<IntOffset>()
 
-//    if(isCheckmate(pieces, this.color))
-//        return moves
-
     for (i in 1..maxMovements) {
-            var targetPosition = getPosition(i)
+        val targetPosition = getPosition(i)
 
-            if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
+        // Проверка выхода за пределы доски
+        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates) break
+
+        // Поиск фигуры на целевой позиции
+        val targetPiece = pieces.find { it.position == targetPosition }
+
+        // Проверяем угрозу для короля
+        val originalPosition = this.position
+        this.position = targetPosition // Временное перемещение фигуры
+
+        // Проверка угрозы для короля
+        if (targetPiece == null && !isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)) {
+            moves.add(targetPosition)
+        }
+
+        // Обрабатываем ситуацию с рокировкой
+        if (i == maxMovements) {
+            val rooks = pieces.filter { it.type == 'R' && it.color == this.color && it.moveCount == 0 }
+
+            if (rooks.isEmpty() || (this.moveCount != 0 && isTheKingInThreat(pieces, this, this.position.x, this.position.y))) {
                 break
-
-            val targetPiece = pieces.find { it.position == targetPosition }
-
-            if (targetPiece != null)
-                break
-
-
-            if (i == maxMovements) {
-                val rooks = pieces.filter { it.type == 'R' && it.color == this.color && it.moveCount == 0 }
-
-                if(rooks.isEmpty() || this.moveCount != 0 || isTheKingInThreat(pieces, this, this.position.x, this.position.y))
-                    break;
-
-                if (maxMovements == 3){
-                    targetPosition = getPosition(i - 1)
-
-                    rooks.first().position = IntOffset(targetPosition.x + 1, targetPosition.y)
-                }
-                else{
-                    rooks.last().position = IntOffset(targetPosition.x - 1, targetPosition.y)
-                }
-
-                moves.add(targetPosition)
-
             }
 
+            // Обработка рокировки
+            if (maxMovements == 3) {
+                val rookTargetPosition = getPosition(i - 1)
+                rooks.first().position = IntOffset(rookTargetPosition.x + 1, rookTargetPosition.y)
+            } else {
+                rooks.last().position = IntOffset(targetPosition.x - 1, targetPosition.y)
+            }
+
+            moves.add(targetPosition)
         }
+
+        // Возврат фигуры в оригинальное состояние
+        this.position = originalPosition
+
+        // Прерываем цикл, если на позиции есть другая фигура
+        if (targetPiece != null) break
+    }
+
     return moves
 }

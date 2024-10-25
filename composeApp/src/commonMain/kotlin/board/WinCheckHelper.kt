@@ -20,7 +20,7 @@ fun isTheKingInThreat(
     // Remove the piece from the list of pieces to get the correct available moves
     val newPieces = pieces.filter { it.position != piece.position }
 
-    val enemyPieces = newPieces.filter { it.color != piece.color }
+    val enemyPieces = newPieces.filter { it.color != piece.color && it.type == 'Q'}
     val enemyMoves = enemyPieces.flatMap { it.getAvailableMoves(pieces = newPieces) }
 
     val isTheKingInThreat = enemyMoves.any { it == king.position }
