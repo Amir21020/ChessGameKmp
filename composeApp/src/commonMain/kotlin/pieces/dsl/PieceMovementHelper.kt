@@ -28,14 +28,7 @@ fun Piece.getMoves(
         val targetPiece = pieces.find { it.position == targetPosition }
 
         // Временно перемещаем фигуру
-        val originalPosition = this.position  // Сохраняем оригинальную позицию
-        this.position = targetPosition         // Перемещаем фигуру в новую позицию
-
-        // Проверяем, в угрозе ли король после потенциального хода
-        val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
-
-        // Возвращаем фигуру обратно на оригинальную позицию
-        this.position = originalPosition
+        val isKingInThreatNow = isKingInThreatAfterMove(targetPosition, pieces)
 
         // Если король не под угрозой, добавляем позицию в возможные ходы
         if (!isKingInThreatNow) {
@@ -59,6 +52,20 @@ fun Piece.getMoves(
     return moves
 }
 
+private  fun Piece.isKingInThreatAfterMove(
+    targetPosition: IntOffset,
+    pieces: List<Piece>
+): Boolean {
+    val originalPosition = this.position  // Сохраняем оригинальную позицию
+    this.position = targetPosition         // Перемещаем фигуру в новую позицию
+
+    // Проверяем, в угрозе ли король после потенциального хода
+    val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
+
+    // Возвращаем фигуру обратно на оригинальную позицию
+    this.position = originalPosition
+    return isKingInThreatNow
+}
 
 
 fun Piece.getLMoves(pieces: List<Piece>): MutableSet<IntOffset> {
@@ -88,16 +95,11 @@ fun Piece.getLMoves(pieces: List<Piece>): MutableSet<IntOffset> {
         val targetPiece = pieces.find { it.position == targetPosition }
 
         // Проверяем, не находится ли король под угрозой при этом движении
-        val originalPosition = this.position
-        this.position = targetPosition // Временное перемещение фигуры
+        val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
 
-        // Проверка угрозы для короля
-        if (king != targetPosition && (targetPiece == null || targetPiece.color != this.color) && !isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)) {
+        if(!isKingInThreatNow && (targetPiece == null || targetPiece.color != this.color)){
             moves.add(targetPosition)
         }
-
-        // Возврат фигуры в оригинальное состояние
-        this.position = originalPosition
     }
 
     return moves
@@ -106,7 +108,7 @@ fun Piece.getCMoves(pieces: List<Piece>, getPosition: (Int) -> IntOffset, maxMov
     val moves = mutableSetOf<IntOffset>()
 
     for (i in 1..maxMovements) {
-        val targetPosition = getPosition(i)
+        var targetPosition = getPosition(i)
 
         // Проверка выхода за пределы доски
         if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates) break
@@ -115,38 +117,31 @@ fun Piece.getCMoves(pieces: List<Piece>, getPosition: (Int) -> IntOffset, maxMov
         val targetPiece = pieces.find { it.position == targetPosition }
 
         // Проверяем угрозу для короля
-        val originalPosition = this.position
-        this.position = targetPosition // Временное перемещение фигуры
+        val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
 
-        // Проверка угрозы для короля
-        if (targetPiece == null && !isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)) {
-            moves.add(targetPosition)
+        if (targetPiece != null){
+            break
         }
 
         // Обрабатываем ситуацию с рокировкой
         if (i == maxMovements) {
             val rooks = pieces.filter { it.type == 'R' && it.color == this.color && it.moveCount == 0 }
 
-            if (rooks.isEmpty() || (this.moveCount != 0 && isTheKingInThreat(pieces, this, this.position.x, this.position.y))) {
+            if (rooks.isEmpty() || this.moveCount != 0 || isKingInThreatNow) {
                 break
             }
 
             // Обработка рокировки
             if (maxMovements == 3) {
-                val rookTargetPosition = getPosition(i - 1)
-                rooks.first().position = IntOffset(rookTargetPosition.x + 1, rookTargetPosition.y)
+                targetPosition = getPosition(i - 1)
+                rooks.first().position = IntOffset(targetPosition.x + 1, targetPosition.y)
+                moves.add(targetPosition)
             } else {
                 rooks.last().position = IntOffset(targetPosition.x - 1, targetPosition.y)
+                moves.add(targetPosition)
             }
-
-            moves.add(targetPosition)
         }
 
-        // Возврат фигуры в оригинальное состояние
-        this.position = originalPosition
-
-        // Прерываем цикл, если на позиции есть другая фигура
-        if (targetPiece != null) break
     }
 
     return moves
