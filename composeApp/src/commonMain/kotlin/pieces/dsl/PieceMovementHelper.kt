@@ -16,38 +16,51 @@ fun Piece.getMoves(
 ): Set<IntOffset> {
     val moves = mutableSetOf<IntOffset>()
 
-//    if(isCheckmate(pieces, this.color))
-//        return moves
-
-      for (i in 1..maxMovements) {
+    for (i in 1..maxMovements) {
         val targetPosition = getPosition(i)
 
-        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
+        // Проверка выхода за пределы доски
+        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates) {
             break
+        }
 
-//          if(isTheKingInThreat(pieces,this,targetPosition.x, targetPosition.y))
-//            continue
-
+        // Поиск цели в позиции
         val targetPiece = pieces.find { it.position == targetPosition }
 
-        val kingPosition = pieces.find { it.type == 'K' && it.color != this.color}?.position
+        // Временно перемещаем фигуру
+        val originalPosition = this.position  // Сохраняем оригинальную позицию
+        this.position = targetPosition         // Перемещаем фигуру в новую позицию
 
+        // Проверяем, в угрозе ли король после потенциального хода
+        val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
 
+        // Возвращаем фигуру обратно на оригинальную позицию
+        this.position = originalPosition
 
-        if (targetPiece != null) {
-            if (targetPiece.color != this.color && canCapture && kingPosition != targetPosition)
+        // Если король не под угрозой, добавляем позицию в возможные ходы
+        if (!isKingInThreatNow) {
+            if (targetPiece != null) {
+                // Если есть цель и она противника, добавляем в возможные ходы (если захват разрешен)
+                if (targetPiece.color != this.color && canCapture) {
+                    moves.add(targetPosition)
+                }
+                // Прерываем цикл, так как не можем двигаться дальше
+                break
+            } else if (captureOnly) {
+                // Прерываем, если ищем только захваты
+                break
+            } else {
+                // Добавляем позицию как свободную
                 moves.add(targetPosition)
-
-            break
-        } else if (captureOnly) {
-            break
-        } else {
-            moves.add(targetPosition)
+            }
         }
     }
 
     return moves
 }
+
+
+
 
 fun Piece.getLMoves(
     pieces: List<Piece>,
