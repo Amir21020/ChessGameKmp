@@ -5,6 +5,7 @@ import board.BoardXCoordinates
 import board.BoardYCoordinates
 import board.isCheckmate
 import board.isTheKingInThreat
+import kotlinx.coroutines.*
 import pieces.Piece
 
 fun Piece.getMoves(
@@ -13,7 +14,8 @@ fun Piece.getMoves(
     maxMovements: Int,
     canCapture: Boolean,
     captureOnly: Boolean,
-): Set<IntOffset> {
+): Set<IntOffset>
+{
     val moves = mutableSetOf<IntOffset>()
 
     for (i in 1..maxMovements) {
@@ -28,8 +30,7 @@ fun Piece.getMoves(
         val targetPiece = pieces.find { it.position == targetPosition }
 
         // Временно перемещаем фигуру
-        val isKingInThreatNow = isKingInThreatAfterMove(targetPosition, pieces)
-
+        val isKingInThreatNow =  isKingInThreatAfterMove(targetPosition, pieces)
         // Если король не под угрозой, добавляем позицию в возможные ходы
         if (!isKingInThreatNow) {
             if (targetPiece != null) {
@@ -46,11 +47,15 @@ fun Piece.getMoves(
                 // Добавляем позицию как свободную
                 moves.add(targetPosition)
             }
-        }
-    }
 
-    return moves
+        }
+
+
+    }
+    return moves;
 }
+
+
 
 private  fun Piece.isKingInThreatAfterMove(
     targetPosition: IntOffset,
@@ -70,9 +75,6 @@ private  fun Piece.isKingInThreatAfterMove(
 
 fun Piece.getLMoves(pieces: List<Piece>): MutableSet<IntOffset> {
     val moves = mutableSetOf<IntOffset>()
-
-    // Получаем позицию короля противника
-    val king = pieces.find { it.type == 'K' && it.color != this.color }?.position
 
     val offsets = listOf(
         IntOffset(-1, -2),
