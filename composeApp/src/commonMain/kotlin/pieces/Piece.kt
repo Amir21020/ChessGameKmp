@@ -22,13 +22,17 @@ interface Piece {
 
     val type: Char
 
+    var isCovered : Boolean
+
     var moveCount : Int
 
     val drawable: DrawableResource
 
     var position: IntOffset
 
-    fun getAvailableMoves(pieces: List<Piece>): Set<IntOffset>
+    suspend fun getAvailableMoves(pieces: List<Piece>): Set<IntOffset>
+
+    suspend fun getCheckThreateningMoves(pieces: List<Piece>) : Set<IntOffset>
 
     fun encode(): String {
         // W, B
@@ -57,26 +61,28 @@ interface Piece {
                     y = y.digitToInt() + BoardYCoordinates.min()
                 )
 
+            val isCovered = false
+
             val moveCount = 0
 
             return when (type) {
                 Pawn.Type ->
-                    Pawn(pieceColor, position,moveCount)
+                    Pawn(pieceColor, position,moveCount, isCovered)
                 King.Type ->
-                    King(pieceColor, position, moveCount  )
+                    King(pieceColor, position, moveCount, isCovered  )
 
 
                 Queen.Type ->
-                    Queen(pieceColor, position, moveCount)
+                    Queen(pieceColor, position, moveCount, isCovered)
 
                 Knight.Type ->
-                    Knight(pieceColor, position, moveCount)
+                    Knight(pieceColor, position, moveCount, isCovered)
 
                 Rook.Type ->
-                    Rook(pieceColor, position, moveCount)
+                    Rook(pieceColor, position, moveCount, isCovered)
 
                 Bishop.Type ->
-                    Bishop(pieceColor, position, moveCount)
+                    Bishop(pieceColor, position, moveCount, isCovered)
 
                 else ->
                     throw IllegalArgumentException("Invalid piece type!")

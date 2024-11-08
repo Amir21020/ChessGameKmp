@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import board.BoardXCoordinates
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import pieces.Piece
 import ui.ActiveColor
@@ -33,6 +35,7 @@ fun BoardCell(
     isAvailableMove: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val backgroundColor =
         when {
             piece != null && piece == board.selectedPiece ->
@@ -97,7 +100,9 @@ fun BoardCell(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
-                        board.selectPiece(it)
+                        coroutineScope.launch {
+                            board.selectPiece(it)
+                        }
                     }
                     .fillMaxSize()
                     .padding(8.dp)

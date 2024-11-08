@@ -6,12 +6,14 @@ import chessgamekmp.composeapp.generated.resources.knight_black
 import chessgamekmp.composeapp.generated.resources.knight_white
 import chessgamekmp.composeapp.generated.resources.rook_black
 import chessgamekmp.composeapp.generated.resources.rook_white
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import pieces.dsl.getPieceMoves
 
 class Knight(
     override val color: Piece.Color,
-    override var position: IntOffset, override var moveCount: Int, ): Piece {
+    override var position: IntOffset, override var moveCount: Int, override var isCovered: Boolean, ): Piece {
 
     override val type: Char = Type
 
@@ -21,10 +23,31 @@ class Knight(
         else
             Res.drawable.knight_black
 
-    override fun getAvailableMoves(pieces: List<Piece>): Set<IntOffset> =
-        getPieceMoves(pieces) {
-            getLMoves()
+    override suspend fun getAvailableMoves(pieces: List<Piece>): Set<IntOffset> =
+        coroutineScope {
+            getPieceMoves(pieces) {
+                launch {
+                    getLMoves()
+                }
+
+            }
+
         }
+
+
+    override suspend  fun getCheckThreateningMoves(pieces: List<Piece>): Set<IntOffset> =
+        coroutineScope {
+            getPieceMoves(pieces){
+                launch {
+                    openGetLMoves()
+                }
+
+            }
+        }
+
+
+
+
 
     companion object {
         const val Type = 'N'

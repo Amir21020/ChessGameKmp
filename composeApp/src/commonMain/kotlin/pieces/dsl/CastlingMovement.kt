@@ -9,14 +9,11 @@ enum class CastlingMovement {
     Right
 }
 
-fun Piece.getCastlingMoves(
+suspend fun Piece.getCastlingMoves(
     pieces: List<Piece>,
     movement: CastlingMovement,
     maxMovements: Int,
 ): Set<IntOffset> {
-
-
-
     return getCMoves(
         pieces = pieces,
         getPosition = {

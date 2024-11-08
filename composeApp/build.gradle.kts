@@ -123,6 +123,8 @@ room {
 
 
 dependencies {
+    implementation(libs.firebase.crashlytics.buildtools)
+//    implementation(libs.androidx.media3.common.ktx)
     debugImplementation(compose.uiTooling)
 //     ksp(libs.room.compiler)
 }

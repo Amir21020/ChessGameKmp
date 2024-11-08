@@ -7,8 +7,49 @@ import board.isCheckmate
 import board.isTheKingInThreat
 import kotlinx.coroutines.*
 import pieces.Piece
+suspend fun Piece.getMoves(
+    pieces: List<Piece>,
+    getPosition: (Int) -> IntOffset,
+    maxMovements: Int,
+    canCapture: Boolean,
+    captureOnly: Boolean
+): Set<IntOffset> {
+    val moves = mutableSetOf<IntOffset>()
 
-fun Piece.getMoves(
+    for (i in 1..maxMovements) {
+        val targetPosition = getPosition(i)
+
+
+        // Check if the target position is within board limits
+        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates) {
+            break
+        }
+
+        val targetPiece = pieces.find { it.position == targetPosition }
+        val isKing = this.type == 'K'
+
+
+        val isCheck = isTheKingInThreat(pieces,this,targetPosition.x,targetPosition.y)
+
+
+        if(!isCheck){
+            if (targetPiece != null) {
+                if (targetPiece.color != this.color && canCapture)
+                    moves.add(targetPosition)
+                break
+            } else if (captureOnly) {
+                break
+            } else {
+                moves.add(targetPosition)
+            }
+        }
+
+
+    }
+    return moves
+}
+
+suspend fun Piece.getMovesThatCauseCheck(
     pieces: List<Piece>,
     getPosition: (Int) -> IntOffset,
     maxMovements: Int,
@@ -16,6 +57,8 @@ fun Piece.getMoves(
     captureOnly: Boolean,
 ): Set<IntOffset>
 {
+    var lastPosition: IntOffset? = null
+
     val moves = mutableSetOf<IntOffset>()
 
     for (i in 1..maxMovements) {
@@ -30,34 +73,44 @@ fun Piece.getMoves(
         val targetPiece = pieces.find { it.position == targetPosition }
 
         // Временно перемещаем фигуру
-        val isKingInThreatNow =  isKingInThreatAfterMove(targetPosition, pieces)
+        val isKingInThreatNow = false
         // Если король не под угрозой, добавляем позицию в возможные ходы
         if (!isKingInThreatNow) {
             if (targetPiece != null) {
+
                 // Если есть цель и она противника, добавляем в возможные ходы (если захват разрешен)
                 if (targetPiece.color != this.color && canCapture) {
                     moves.add(targetPosition)
                 }
-                // Прерываем цикл, так как не можем двигаться дальше
+                if(targetPiece.color == this.color){
+                    targetPiece.isCovered = true
+                }
                 break
             } else if (captureOnly) {
                 // Прерываем, если ищем только захваты
                 break
             } else {
                 // Добавляем позицию как свободную
-                moves.add(targetPosition)
+                lastPosition = targetPosition
             }
 
         }
-
-
     }
+
+    if(lastPosition == null) return moves
+
+    moves.add(lastPosition)
+
+
     return moves;
 }
 
 
 
-private  fun Piece.isKingInThreatAfterMove(
+
+
+
+private suspend fun Piece.isKingInThreatAfterMove(
     targetPosition: IntOffset,
     pieces: List<Piece>
 ): Boolean {
@@ -65,7 +118,8 @@ private  fun Piece.isKingInThreatAfterMove(
     this.position = targetPosition         // Перемещаем фигуру в новую позицию
 
     // Проверяем, в угрозе ли король после потенциального хода
-    val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
+    val isKingInThreatNow =
+        isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
 
     // Возвращаем фигуру обратно на оригинальную позицию
     this.position = originalPosition
@@ -73,7 +127,9 @@ private  fun Piece.isKingInThreatAfterMove(
 }
 
 
-fun Piece.getLMoves(pieces: List<Piece>): MutableSet<IntOffset> {
+suspend fun Piece.getLMovesThatCauseCheck(
+    pieces: List<Piece>,
+): MutableSet<IntOffset> {
     val moves = mutableSetOf<IntOffset>()
 
     val offsets = listOf(
@@ -90,38 +146,85 @@ fun Piece.getLMoves(pieces: List<Piece>): MutableSet<IntOffset> {
     for (offset in offsets) {
         val targetPosition = position + offset
 
-        // Проверка выхода за пределы доски
-        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates) continue
+        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
+            continue
 
-        // Поиск фигуры на целевой позиции
         val targetPiece = pieces.find { it.position == targetPosition }
 
-        // Проверяем, не находится ли король под угрозой при этом движении
-        val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
+        val isKingInThreatAfterMove =  false
 
-        if(!isKingInThreatNow && (targetPiece == null || targetPiece.color != this.color)){
-            moves.add(targetPosition)
+        if (!isKingInThreatAfterMove ){
+            if (targetPiece != null) {
+                if(targetPiece.color != this.color){
+                    moves.add(targetPosition)
+                }
+                else{
+                    targetPiece.isCovered = true
+                }
+            }
+            else{
+                moves.add(targetPosition)
+            }
         }
     }
 
     return moves
 }
-fun Piece.getCMoves(pieces: List<Piece>, getPosition: (Int) -> IntOffset, maxMovements: Int): MutableSet<IntOffset> {
+
+suspend fun Piece.getLMoves(
+    pieces: List<Piece>,
+): MutableSet<IntOffset> {
+    val moves = mutableSetOf<IntOffset>()
+
+    val offsets = listOf(
+        IntOffset(-1, -2),
+        IntOffset(1, -2),
+        IntOffset(-2, -1),
+        IntOffset(2, -1),
+        IntOffset(-2, 1),
+        IntOffset(2, 1),
+        IntOffset(-1, 2),
+        IntOffset(1, 2),
+    )
+
+    for (offset in offsets) {
+        val targetPosition = position + offset
+
+        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates)
+            continue
+
+        val targetPiece = pieces.find { it.position == targetPosition }
+
+        val isCheck = isTheKingInThreat(pieces,this,targetPosition.x,targetPosition.y)
+
+        if (!isCheck ){
+            if (targetPiece == null || targetPiece.color != this.color)
+                moves.add(targetPosition)
+        }
+    }
+
+    return moves
+}
+suspend fun Piece.getCMoves(pieces: List<Piece>, getPosition: (Int) -> IntOffset, maxMovements: Int): MutableSet<IntOffset>
+{
     val moves = mutableSetOf<IntOffset>()
 
     for (i in 1..maxMovements) {
         var targetPosition = getPosition(i)
 
         // Проверка выхода за пределы доски
-        if (targetPosition.x !in BoardXCoordinates || targetPosition.y !in BoardYCoordinates) break
+        if (targetPosition.x !in BoardXCoordinates && targetPosition.y !in BoardYCoordinates) break
 
         // Поиск фигуры на целевой позиции
         val targetPiece = pieces.find { it.position == targetPosition }
 
-        // Проверяем угрозу для короля
-        val isKingInThreatNow = isTheKingInThreat(pieces, this, targetPosition.x, targetPosition.y)
 
-        if (targetPiece != null){
+        val isKingInThreatNow =
+            isTheKingInThreat(pieces, this,
+                targetPosition.x, targetPosition.y)
+
+
+        if (targetPiece != null || isKingInThreatNow) {
             break
         }
 
@@ -129,7 +232,7 @@ fun Piece.getCMoves(pieces: List<Piece>, getPosition: (Int) -> IntOffset, maxMov
         if (i == maxMovements) {
             val rooks = pieces.filter { it.type == 'R' && it.color == this.color && it.moveCount == 0 }
 
-            if (rooks.isEmpty() || this.moveCount != 0 || isKingInThreatNow) {
+            if (rooks.isEmpty() ||  this.moveCount != 0) {
                 break
             }
 

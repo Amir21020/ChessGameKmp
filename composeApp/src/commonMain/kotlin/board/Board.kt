@@ -1,12 +1,5 @@
 package board
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.unit.IntOffset
 import board.Board.Companion.BoardKeyPrefix
 import com.russhwolf.settings.set
@@ -91,7 +84,7 @@ class Board(
      * User events
      */
 
-    fun selectPiece(piece: Piece) {
+    suspend fun selectPiece(piece: Piece) {
         if (piece.color != playerTurn)
             return
 
@@ -121,6 +114,8 @@ class Board(
             switchPlayerTurn()
 
             moveIncrement++
+
+            piece.isCovered = false
 
             piece.moveCount++
 

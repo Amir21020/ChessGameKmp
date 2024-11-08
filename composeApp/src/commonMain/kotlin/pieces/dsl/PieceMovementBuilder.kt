@@ -1,6 +1,10 @@
 package pieces.dsl
 
 import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import pieces.Piece
 
 fun Piece.getPieceMoves(
@@ -21,7 +25,7 @@ class PieceMovementBuilder(
 ) {
     private val moves = mutableSetOf<IntOffset>()
 
-    fun straightMoves(
+    suspend fun straightMoves(
         maxMovements: Int = 7,
         canCapture: Boolean = true,
         captureOnly: Boolean = false,
@@ -36,7 +40,7 @@ class PieceMovementBuilder(
         }
     }
 
-    fun straightMoves(
+    suspend fun straightMoves(
         movement: StraightMovement,
         maxMovements: Int = 7,
         canCapture: Boolean = true,
@@ -53,32 +57,54 @@ class PieceMovementBuilder(
         )
     }
 
-    fun diagonalMoves(
+    suspend fun openStraightMoves(
         maxMovements: Int = 7,
         canCapture: Boolean = true,
         captureOnly: Boolean = false,
-    ) {
-        DiagonalMovement.entries.forEach { movement ->
-            diagonalMoves(
+        check: Boolean = true
+    ){
+        StraightMovement.entries.forEach { movement ->
+            openStraightMoves(
                 movement = movement,
                 maxMovements = maxMovements,
                 canCapture = canCapture,
                 captureOnly = captureOnly,
+                check = check
             )
         }
     }
 
-    fun castlingMoves(
+    suspend fun openStraightMoves(
+        movement: StraightMovement,
+        maxMovements: Int = 7,
+        canCapture: Boolean = true,
+        captureOnly: Boolean = false,
+        check: Boolean = true
+    ){
+        moves.addAll(
+            piece.getStraightMoves(
+                pieces = pieces,
+                movement = movement,
+                maxMovements = maxMovements,
+                canCapture = canCapture,
+                captureOnly = captureOnly,
+                check = check
+            )
+        )
+    }
+
+
+
+   suspend fun castlingMoves(
     ) {
         CastlingMovement.entries.forEach { movement ->
             castlingMoves(
                 movement = movement,
             )
         }
-
     }
 
-    fun castlingMoves(
+    private suspend fun castlingMoves(
         movement: CastlingMovement,
     ){
         val maxMovements = when (movement) {
@@ -94,7 +120,23 @@ class PieceMovementBuilder(
         )
     }
 
-    fun diagonalMoves(
+    suspend fun diagonalMoves(
+        maxMovements: Int = 7,
+        canCapture: Boolean = true,
+        captureOnly: Boolean = false,
+    ) {
+        DiagonalMovement.entries.forEach { movement ->
+            diagonalMoves(
+                movement = movement,
+                maxMovements = maxMovements,
+                canCapture = canCapture,
+                captureOnly = captureOnly,
+            )
+        }
+    }
+
+
+    suspend fun diagonalMoves(
         movement: DiagonalMovement,
         maxMovements: Int = 7,
         canCapture: Boolean = true,
@@ -111,7 +153,43 @@ class PieceMovementBuilder(
         )
     }
 
-    fun getLMoves() {
+    suspend fun openDiagonalMoves(
+        maxMovements: Int = 7,
+        canCapture: Boolean = true,
+        captureOnly: Boolean = false,
+        check: Boolean = true
+    ) {
+        DiagonalMovement.entries.forEach { movement ->
+            openDiagonalMoves(
+                movement = movement,
+                maxMovements = maxMovements,
+                canCapture = canCapture,
+                captureOnly = captureOnly,
+                check = check
+            )
+        }
+    }
+
+    suspend fun openDiagonalMoves(
+        movement: DiagonalMovement,
+        maxMovements: Int = 7,
+        canCapture: Boolean = true,
+        captureOnly: Boolean = false,
+        check: Boolean = true
+    ){
+        moves.addAll(
+            piece.getDiagonalMoves(
+                pieces = pieces,
+                movement = movement,
+                maxMovements = maxMovements,
+                canCapture = canCapture,
+                captureOnly = captureOnly,
+                check = check
+            )
+        )
+    }
+
+    suspend fun getLMoves() {
         moves.addAll(
             piece.getLMoves(
                 pieces = pieces,
@@ -119,5 +197,13 @@ class PieceMovementBuilder(
         )
     }
 
-    fun build(): Set<IntOffset> = moves.toSet()
+    suspend fun openGetLMoves(){
+        moves.addAll(
+            piece.getLMovesThatCauseCheck(
+                pieces = pieces,
+            )
+        )
+    }
+
+    fun build(): Set<IntOffset> = moves
 }
